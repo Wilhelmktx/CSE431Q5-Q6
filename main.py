@@ -1,16 +1,92 @@
 import timeit
 import random
 
-
+import sys
+sys.setrecursionlimit(1500)
 import csv
 
 MIN_MERGE = 32
 
+#Obtained from here: https://www.geeksforgeeks.org/tim-sort-in-python/
+def insertionTim(arr, left=0, right=None):
+    # Base case: if the array is already sorted, do nothing
+    if right is None:
+        right = len(arr) - 1
 
+    # Iterate through the array, starting from the second element
+    for i in range(left + 1, right + 1):
+        # Select the current element
+        key_item = arr[i]
+
+        # Compare the current element with the previous one
+        j = i - 1
+
+        # While the previous element is greater than the current one,
+        # shift the previous element to the next position
+        while j >= left and arr[j] > key_item:
+            arr[j + 1] = arr[j]
+            j -= 1
+
+        # Once the loop ends, the previous element is less than or equal to
+        # the current element, so place the current element after it
+        arr[j + 1] = key_item
+
+    return arr
+
+def mergeTim(left, right):
+    # If the left subarray is empty, return the right subarray
+    if not left:
+        return right
+
+    # If the right subarray is empty, return the left subarray
+    if not right:
+        return left
+
+    # Compare the first elements of the two subarrays
+    if left[0] < right[0]:
+        # If the first element of the left subarray is smaller,
+        # recursively merge the left subarray with the right one
+        return [left[0]] + mergeTim(left[1:], right)
+    else:
+        # If the first element of the right subarray is smaller,
+        # recursively merge the right subarray with the left one
+        return [right[0]] + mergeTim(left, right[1:])
+
+def tim_sort(arr):
+    # Initialize the minimum run size
+    min_run = 32
+
+    # Find the length of the array
+    n = len(arr)
+
+    # Traverse the array and do insertion sort on each segment of size min_run
+    for i in range(0, n, min_run):
+        insertionTim(arr, i, min(i + min_run - 1, (n - 1)))
+
+    # Start merging from size 32 (or min_run)
+    size = min_run
+    while size < n:
+        # Divide the array into merge_size
+        for start in range(0, n, size * 2):
+            # Find the midpoint and endpoint of the left and right subarrays
+            midpoint = start + size
+            end = min((start + size * 2 - 1), (n - 1))
+
+            # Merge the two subarrays
+            merged_array = mergeTim(arr[start:midpoint], arr[midpoint:end + 1])
+
+            # Assign the merged array to the original array
+            arr[start:start + len(merged_array)] = merged_array
+
+        # Increase the merge size for the next iteration
+        size *= 2
+
+    return arr
 
 
 #From https://www.geeksforgeeks.org/python-program-for-insertion-sort/#
 def insertionSort(arr):
+
     n = len(arr)  # Get the length of the array
 
     if n <= 1:
@@ -85,72 +161,29 @@ def mergeSort(arr, l, r):
         merge(arr, l, m, r)
 
 
-# test0 = random.sample(range(0, 1000), 2)
-# test0_3 = random.sample(range(0, 1000), 3)
-# test0_4 = random.sample(range(0, 1000), 4)
-# test0_5 = random.sample(range(0, 1000), 5)
-# test0_7 = random.sample(range(0, 1000), 7)
-# test0_8 = random.sample(range(0, 1000), 8)
-# test1 = random.sample(range(0, 1000), 10)
-# test2 = random.sample(range(0, 1000), 20)
-# test3 = random.sample(range(0, 1000), 30)
-# test4 = random.sample(range(0, 1000), 40)
-# test5 = random.sample(range(0, 1000), 50)
-#
-# test6 = random.sample(range(0, 1000), 100)
-# test7 = random.sample(range(0, 1000), 500)
-# test8 = random.sample(range(0, 1000), 1000)
-
 def comparison(lis):
 
-    #print("list: ", lis)
-    #timeit.timeit()
+    lis1=lis.copy()
+    lis2=lis.copy()
+    lis3=lis.copy()
+
     start = timeit.default_timer()
-    insertionSort(lis)
+    insertionSort(lis1)
     end = timeit.default_timer()
 
     start2 = timeit.default_timer()
-    mergeSort(lis, 0, len(test0)-1)
+    mergeSort(lis2, 0, len(lis2)-1)
     end2 = timeit.default_timer()
 
-    # print(start)
-    # print(end)
-    # print(start2)
-    # print(end2)
-    # print("Difference between Insertion Sort and Merge sort respectively on sorting a unsorted list with 2 values: "
-    #       , end-start, "and ", end2-start2)
-    # if abs(end-start) > abs(end2-start2):
-    #     print("Merge Sort was faster for n ",len(lis), " : ", abs(end-start), "and ", abs(end2-start2))
-    # else:
-    #     print("Insertion Sort was faster for n ",len(lis), " : ", abs(end-start), "and ", abs(end2-start2))
-    return [end - start, end2 - start2]
-    # if end-start > end2-start2:
-    #     print("Merge Sort was faster for n ",len(lis), " : ", end-start, "and ", end2-start2)
-    # else:
-    #     print("Insertion Sort was faster for n ",len(lis), " : ", end-start, "and ", end2-start2)
+    start3 = timeit.default_timer()
+    tim_sort(lis3)
+    end3 = timeit.default_timer()
 
+    return [end - start, end2 - start2, end3 - start3]
 
-# comparison(test0)
-#
-# comparison(test0_3)
-# comparison(test0_4)
-# comparison(test0_5)
-# comparison(test0_6)
-# comparison(test0_7)
-# comparison(test0_8)
-# comparison(test0_9)
-#
-# comparison(test1)
-# comparison(test2)
-# comparison(test3)
-# comparison(test4)
-# comparison(test5)
-# comparison(test6)
-# comparison(test7)
-# comparison(test8)
 
 lis = []
-lis.append(["Insertion Sort", "Merge Sort"])
+lis.append(["Insertion Sort", "Merge Sort", "Tim Sort"])
 for i in range(50):
     og = random.sample(range(0, 1000), 1000)
 
